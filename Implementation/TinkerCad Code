@@ -1,0 +1,87 @@
+const int motorPin = 9;  // Pin for motor control
+
+// Sensor pin (simulated ultrasonic sensor)
+const int triggerPin = 7;  // Pin for the trigger
+const int echoPin = 7;     // Pin for the echo (same pin for simulation purposes)
+
+int inches = 0;
+int cm = 0;
+
+// Distance thresholds for detection and returning to normal speed
+const int normalDistanceThreshold = 50;  // Distance at which speed is normal (in cm)
+const int reduceSpeedThreshold = 20;     // Distance at which speed is reduced (in cm)
+
+int lastState = 0;  // 0 = normal speed, 1 = reduce speed
+
+// Counter for reducing print frequency
+int printCounter = 0;  // Counter to track how many loops have passed
+
+long readUltrasonicDistance(int triggerPin, int echoPin) {
+  pinMode(triggerPin, OUTPUT);  // Clear the trigger
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigger pin to HIGH state for 10 microseconds
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+  // Reads the echo pin, and returns the sound wave travel time in microseconds
+  return pulseIn(echoPin, HIGH);
+}
+
+void setup() {
+  Serial.begin(9600);  // Start serial communication
+
+  // Set the motor pin as an output
+  pinMode(motorPin, OUTPUT);
+  
+  // Set the sensor pins
+  pinMode(triggerPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+}
+
+void loop() {
+  // Simulate the sensor readings by measuring the ping time (this will be the distance in cm)
+  cm = 0.01723 * readUltrasonicDistance(triggerPin, echoPin); // Get the distance in cm
+  inches = cm / 2.54; // Convert to inches for printing
+
+  // Increment print counter to print every 5 iterations
+  printCounter++;
+
+  // Print the sensor readings every 5 iterations
+  if (printCounter >= 5) {
+    Serial.print("Distance: ");
+    Serial.print(inches);
+    Serial.print(" in | ");
+    Serial.print(cm);
+    Serial.println(" cm");
+
+    // Reset the counter
+    printCounter = 0;
+  }
+
+  // Adjust motor speed based on the sensor's detected distance
+  if (cm < reduceSpeedThreshold) {  // Car is too close, reduce speed
+    if (lastState != 1) {  // Only change speed if the state has changed
+      analogWrite(motorPin, 128);  // Slow speed (50% duty cycle)
+      Serial.println("Reducing speed...");
+      lastState = 1;
+    }
+  }
+  else if (cm >= reduceSpeedThreshold && cm <= normalDistanceThreshold) {  // Normal distance
+    if (lastState != 1) {  // Only change speed if the state has changed
+      analogWrite(motorPin, 128);  // Slow speed (50% duty cycle)
+      Serial.println("Increasing distance...");
+      lastState = 1;
+    }
+  }
+  else {  // Car has passed, speed back to normal
+    if (lastState != 0) {  // Only change speed if the state has changed
+      analogWrite(motorPin, 255);  // Normal speed (100% duty cycle)
+      Serial.println("Normal Distance...");
+      lastState = 0;
+    }
+  }
+
+  delay(500);  // Delay to simulate a realistic speed change and slow down the loop for easier reading
+}
