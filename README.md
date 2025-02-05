@@ -12,6 +12,6 @@ This contains all the necessary diagrams like requirements, activity, use case, 
 
 ## Group members 
 1. Ammar Haziq Bin Mohd Halim
-2. Adijat Ajoke
+2. Adijat Ajoke Sulaimon
 3. Amir Hossein
 4. Zahra Mahdion
